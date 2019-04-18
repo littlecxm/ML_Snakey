@@ -5,12 +5,12 @@ from pygame.color import THECOLORS
 import pygame.font
 from random import randint
 
-
 INFOAREA_WIDTH = 100
 INFOAREA_HEIGHT = 200  # 屏幕大小
 PLAYGROUND_WIDTH = 200
 PLAYGROUND_HEIGHT = 200
 WINDOW_TITLE = "Snacky"  # 屏幕标题
+
 allowed_event = [pygame.KEYDOWN, pygame.QUIT]  # 有用事件列表
 pygame.init()  # 初始化pygame
 pygame.display.set_caption(WINDOW_TITLE)  # 窗口标题
@@ -23,6 +23,7 @@ s_infoarea = pygame.Surface((PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT), 0, 32)
 si_snake = pygame.image.load("images/snake.png").convert_alpha()  # 加载图片
 si_food = pygame.image.load("images/Pineapple.png").convert_alpha()
 si_deadsnake = pygame.image.load("images/dead_snake.png").convert_alpha()
+si_highscore = pygame.image.load("images/highscore.png").convert_alpha()
 si_gamestart = pygame.image.load("images/game_start.png").convert_alpha()
 si_bomb = pygame.image.load("images/bm.png").convert_alpha()
 
@@ -33,8 +34,9 @@ f_small_arial = pygame.font.SysFont("arial", 12, 1)
 
 sf_arial_gameover = f_arial.render("GAMEOVER!", 1, THECOLORS["black"])  # 渲染文字
 sf_small_arial_restart = f_small_arial.render("Press 'R' to restart.", 1, THECOLORS["black"])
-sf_small_arial_scoreboard = f_small_arial.render("Press 'S' to open Scoreboard.", 1, THECOLORS["black"])
+sf_small_arial_scoreboard = f_small_arial.render("Press 'H' to open highscore record.", 1, THECOLORS["black"])
 sf_small_arial_gamestart = f_small_arial.render("SPACE to start and 'Q' to exit.", 1, THECOLORS["black"])
+
 sf_optima_caption = f_optima.render("SNACKY", 1, THECOLORS["orange"])
 sf_small_arial_level = f_small_arial.render("level: ", 1, THECOLORS["black"])
 sf_small_arial_length = f_small_arial.render("length: ", 1, THECOLORS["black"])
@@ -42,8 +44,13 @@ sf_small_arial_ate = f_small_arial.render("ate: ", 1, THECOLORS["black"])
 sf_small_arial_position = f_small_arial.render("pos: ", 1, THECOLORS["black"])
 sf_small_arial_botton = f_small_arial.render("btnreg: ", 1, THECOLORS["black"])
 sf_small_arial_direction = f_small_arial.render("direction: ", 1, THECOLORS["black"])
+
+sf_arial_highscore = f_arial.render("HIGHSCORE", 1, THECOLORS["black"])  # 渲染文字
+sf_small_arial_back = f_small_arial.render("Press 'Backspace' to back.", 1, THECOLORS["black"])
+
 Lsf_small_arial_numbers_black = []
 Lsf_small_arial_numbers_red = []
+
 for i in range(0, 10):
 	Lsf_small_arial_numbers_black.append(f_small_arial.render(str(i), 1, THECOLORS["black"]))
 for i in range(0, 10):
@@ -178,6 +185,11 @@ def main():
 			c_frame = 0  # 更新一轮计数器
 
 			if deadflag:
+				try:
+					with open('save.yxzh', 'w') as f:
+						f.write("%s" % ate)
+				except OSError as e:
+					pass
 				f_gameover(s_screen, fps_clock, fps)
 				return
 
@@ -187,11 +199,13 @@ def main():
 def f_gamestart(_s_screen, _fps_clock, _fps):
 	while True:
 		for event in pygame.event.get():  # 处理事件
+			if event.type == pygame.KEYDOWN and event.key == K_SPACE:  # 开始
+				return
 			if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_q):  # 退出事件
 				pygame.quit()
 				sys.exit()
-			if event.type == pygame.KEYDOWN and event.key == K_SPACE:  # 开始
-				return
+			if event.type == KEYDOWN and event.key == K_h:  # high score
+				f_scoreboard(_s_screen, _fps_clock, _fps)
 
 		_s_screen.fill(THECOLORS["white"])  # 刷白屏
 		_s_screen.blit(sf_optima_caption, (81, 3))
@@ -212,7 +226,7 @@ def f_gameover(_s_screen, _fps_clock, _fps):
 
 		_s_screen.fill(THECOLORS["white"])  # 刷屏
 		_s_screen.blit(si_deadsnake, (80, 70))
-		_s_screen.blit(sf_arial_gameover, (72, 20))  # 刷文字
+		_s_screen.blit(sf_arial_highscore, (72, 20))  # 刷文字
 		_s_screen.blit(sf_small_arial_restart, (92, 60))
 		pygame.display.flip()  # 更新屏幕
 		_fps_clock.tick(_fps)  # fps延迟
@@ -223,8 +237,24 @@ def f_scoreboard(_s_screen, _fps_clock, _fps):
 			if event.type == pygame.QUIT or event.type == KEYDOWN and event.key == K_q:  # 退出事件
 				pygame.quit()
 				sys.exit()
-			if event.type == pygame.KEYDOWN and event.key == K_r:  # 重新开始
+			if event.type == pygame.KEYDOWN and event.key == K_BACKSPACE:
 				return
+		try:
+			with open('save.yxzh', 'r') as f:
+				score = f.read()
+		except OSError as e:
+				score = "0"
+
+		sf_detail_highscore = f_optima.render(score, 1, THECOLORS["black"])  # 渲染文字
+		_s_screen.fill((74, 192, 253, 255))  # 刷屏
+		_s_screen.blit(si_highscore, (2, 100))
+		_s_screen.blit(si_food, (110, 65))
+		_s_screen.blit(sf_arial_highscore, (90, 20))
+		_s_screen.blit(sf_detail_highscore, (130, 63))
+		_s_screen.blit(sf_small_arial_back, (95, 170))
+		pygame.display.flip()  # 更新屏幕
+		_fps_clock.tick(_fps)  # fps延迟
+
 if __name__ == "__main__":  # 程序入口
 	while True:
 		main()
